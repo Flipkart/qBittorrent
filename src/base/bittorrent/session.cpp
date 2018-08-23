@@ -280,7 +280,7 @@ Session::Session(QObject *parent)
     , m_numResumeData(0)
     , m_extraLimit(0)
     , m_useProxy(false)
-    , m_minAnnounceInterval(10)
+    , m_minAnnounceInterval(BITTORRENT_SESSION_KEY("MinAnnounceInterval"), 10)
 {
     Logger* const logger = Logger::instance();
 
