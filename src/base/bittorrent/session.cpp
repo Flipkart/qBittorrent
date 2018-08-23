@@ -280,6 +280,7 @@ Session::Session(QObject *parent)
     , m_numResumeData(0)
     , m_extraLimit(0)
     , m_useProxy(false)
+    , m_minAnnounceInterval(10)
 {
     Logger* const logger = Logger::instance();
 
@@ -373,6 +374,7 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Local Peer Discovery support [%1]").arg(isLSDEnabled() ? tr("ON") : tr("OFF")), Log::INFO);
     logger->addMessage(tr("PeX support [%1]").arg(isPeXEnabled() ? tr("ON") : tr("OFF")), Log::INFO);
     logger->addMessage(tr("Anonymous mode [%1]").arg(isAnonymousModeEnabled() ? tr("ON") : tr("OFF")), Log::INFO);
+    logger->addMessage(tr("Min Announce Interval [%1]").arg(QString::number(minAnnounceInterval())), Log::INFO);
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
                        , Log::INFO);
@@ -790,6 +792,22 @@ void Session::setGlobalMaxRatio(qreal ratio)
     }
 }
 
+int Session::minAnnounceInterval() const
+{
+    return m_minAnnounceInterval;
+}
+
+void Session::setMinAnnounceInterval(int itvl)
+{
+    if (itvl > 0 && itvl != m_minAnnounceInterval) {
+        m_minAnnounceInterval = itvl;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Min Announce Interval [%1]").arg(QString::number(itvl))
+                    , Log::INFO);
+    }
+}
+
 // Main destructor
 Session::~Session()
 {
@@ -1079,6 +1097,7 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     if (isDHTEnabled())
         settingsPack.set_str(libt::settings_pack::dht_bootstrap_nodes, "dht.libtorrent.org:25401,router.bittorrent.com:6881,router.utorrent.com:6881,dht.transmissionbt.com:6881,dht.aelitis.com:6881");
     settingsPack.set_bool(libt::settings_pack::enable_lsd, isLSDEnabled());
+    settingsPack.set_int(libt::settings_pack::min_announce_interval, minAnnounceInterval());
 }
 
 #else
@@ -1219,6 +1238,8 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
                                            : libt::session_settings::peer_proportional;
 
     sessionSettings.apply_ip_filter_to_trackers = isTrackerFilteringEnabled();
+
+    sessionSettings.min_announce_interval = minAnnounceInterval();
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.

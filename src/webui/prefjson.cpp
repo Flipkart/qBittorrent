@@ -369,6 +369,9 @@ void prefjson::setPreferences(const QString& json)
     // Add trackers
     session->setAddTrackersEnabled(m["add_trackers_enabled"].toBool());
     session->setAdditionalTrackers(m["add_trackers"].toString());
+    // Extra settings applied to libtorrent
+    if (m.contains("min_announce_interval"))
+        session->setMinAnnounceInterval(m["min_announce_interval"].toInt());
 
     // Web UI
     // Language
