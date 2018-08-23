@@ -135,6 +135,10 @@ int main(int argc, char *argv[])
     // We must save it here because QApplication constructor may change it
     bool isOneArg = (argc == 2);
 
+#if defined(QBT_USES_QT5)
+    qSetMessagePattern("[%{if-debug}D%{endif}%{if-info}I%{endif}%{if-warning}W%{endif}%{if-critical}C%{endif}%{if-fatal}F%{endif}][%{file}:%{line} %{function}] %{message}");
+#endif
+
 #ifdef Q_OS_MAC
     // On macOS 10.12 Sierra, Apple changed the behaviour of CFPreferencesSetValue() https://bugreports.qt.io/browse/QTBUG-56344
     // Due to this, we have to move from native plist to IniFormat
