@@ -277,6 +277,7 @@ Session::Session(QObject *parent)
     , m_isTrackerEnabled(BITTORRENT_KEY("TrackerEnabled"), false)
     , m_bannedIPs("State/BannedIPs")
     , m_minAnnounceInterval(BITTORRENT_SESSION_KEY("MinAnnounceInterval"), 10)
+    , m_strictEndGameMode(BITTORRENT_SESSION_KEY("StrictEndGameMode"), true)
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
     , m_extraLimit(0)
@@ -375,6 +376,7 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("PeX support [%1]").arg(isPeXEnabled() ? tr("ON") : tr("OFF")), Log::INFO);
     logger->addMessage(tr("Anonymous mode [%1]").arg(isAnonymousModeEnabled() ? tr("ON") : tr("OFF")), Log::INFO);
     logger->addMessage(tr("Min Announce Interval [%1]").arg(QString::number(minAnnounceInterval())), Log::INFO);
+    logger->addMessage(tr("Strict End Game Mode [%1]").arg(QString::number(strictEndGameMode())), Log::INFO);
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
                        , Log::INFO);
@@ -808,6 +810,22 @@ void Session::setMinAnnounceInterval(int itvl)
     }
 }
 
+bool Session::strictEndGameMode() const
+{
+    return m_strictEndGameMode;
+}
+
+void Session::setStrictEndGameMode(bool enabled)
+{
+    if (enabled != m_strictEndGameMode) {
+        m_strictEndGameMode = enabled;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Strict End Game Mode [%1]").arg(QString::number(enabled))
+                    , Log::INFO);
+    }
+}
+
 // Main destructor
 Session::~Session()
 {
@@ -1098,6 +1116,7 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
         settingsPack.set_str(libt::settings_pack::dht_bootstrap_nodes, "dht.libtorrent.org:25401,router.bittorrent.com:6881,router.utorrent.com:6881,dht.transmissionbt.com:6881,dht.aelitis.com:6881");
     settingsPack.set_bool(libt::settings_pack::enable_lsd, isLSDEnabled());
     settingsPack.set_int(libt::settings_pack::min_announce_interval, minAnnounceInterval());
+    settingsPack.set_int(libt::settings_pack::strict_end_game_mode, strictEndGameMode());
 }
 
 #else
@@ -1240,6 +1259,7 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
     sessionSettings.apply_ip_filter_to_trackers = isTrackerFilteringEnabled();
 
     sessionSettings.min_announce_interval = minAnnounceInterval();
+    sessionSettings.strict_end_game_mode = strictEndGameMode();
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.

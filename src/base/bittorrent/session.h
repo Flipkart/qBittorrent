@@ -329,6 +329,8 @@ namespace BitTorrent
 
         void setMinAnnounceInterval(int itvl);
         int minAnnounceInterval() const;
+        void setStrictEndGameMode(bool enabled);
+        bool strictEndGameMode() const;
 
         TorrentHandle *findTorrent(const InfoHash &hash) const;
         QHash<InfoHash, TorrentHandle *> torrents() const;
@@ -573,6 +575,7 @@ namespace BitTorrent
         CachedSettingValue<QStringList> m_bannedIPs;
         
         CachedSettingValue<int> m_minAnnounceInterval;
+        CachedSettingValue<bool> m_strictEndGameMode;
 
         // Order is important. This needs to be declared after its CachedSettingsValue
         // counterpart, because it uses it for initialization in the constructor
