@@ -278,6 +278,10 @@ Session::Session(QObject *parent)
     , m_bannedIPs("State/BannedIPs")
     , m_minAnnounceInterval(BITTORRENT_SESSION_KEY("MinAnnounceInterval"), 10)
     , m_strictEndGameMode(BITTORRENT_SESSION_KEY("StrictEndGameMode"), true)
+    , m_lowPrioDisk(BITTORRENT_SESSION_KEY("LowPrioDisk"), true)
+    , m_smoothConnects(BITTORRENT_SESSION_KEY("SmoothConnects"), true)
+    , m_tickInterval(BITTORRENT_SESSION_KEY("TickInterval"), 500)
+    , m_TorrentConnectBoost(BITTORRENT_SESSION_KEY("TorrentConnectBoost"), 10)
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
     , m_extraLimit(0)
@@ -375,8 +379,14 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Local Peer Discovery support [%1]").arg(isLSDEnabled() ? tr("ON") : tr("OFF")), Log::INFO);
     logger->addMessage(tr("PeX support [%1]").arg(isPeXEnabled() ? tr("ON") : tr("OFF")), Log::INFO);
     logger->addMessage(tr("Anonymous mode [%1]").arg(isAnonymousModeEnabled() ? tr("ON") : tr("OFF")), Log::INFO);
+    
     logger->addMessage(tr("Min Announce Interval [%1]").arg(QString::number(minAnnounceInterval())), Log::INFO);
     logger->addMessage(tr("Strict End Game Mode [%1]").arg(QString::number(strictEndGameMode())), Log::INFO);
+    logger->addMessage(tr("Low Prio Disk [%1]").arg(QString::number(lowPrioDisk())), Log::INFO);
+    logger->addMessage(tr("Smooth Connects [%1]").arg(QString::number(smoothConnects())), Log::INFO);
+    logger->addMessage(tr("Tick Interval [%1]").arg(QString::number(tickInterval())), Log::INFO);
+    logger->addMessage(tr("Torrent Connect Boost [%1]").arg(QString::number(torrentConnectBoost())), Log::INFO);
+
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
                        , Log::INFO);
@@ -826,6 +836,70 @@ void Session::setStrictEndGameMode(bool enabled)
     }
 }
 
+bool Session::lowPrioDisk() const
+{
+    return m_lowPrioDisk;
+}
+
+void Session::setLowPrioDisk(bool enabled)
+{
+    if (enabled != m_lowPrioDisk) {
+        m_lowPrioDisk = enabled;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Low Prio Disk [%1]").arg(QString::number(enabled))
+                    , Log::INFO);
+    }
+}
+
+bool Session::smoothConnects() const
+{
+    return m_smoothConnects;
+}
+
+void Session::setSmoothConnects(bool enabled)
+{
+    if (enabled != m_smoothConnects) {
+        m_smoothConnects = enabled;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Smooth Connects [%1]").arg(QString::number(enabled))
+                    , Log::INFO);
+    }
+}
+
+int Session::tickInterval() const
+{
+    return m_tickInterval;
+}
+
+void Session::setTickInterval(int itvl)
+{
+    if (itvl > 0 && itvl != m_tickInterval) {
+        m_tickInterval = itvl;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Tick Interval [%1]").arg(QString::number(itvl))
+                    , Log::INFO);
+    }
+}
+
+int Session::torrentConnectBoost() const
+{
+    return m_torrentConnectBoost;
+}
+
+void Session::setTorrentConnectBoost(int val)
+{
+    if (val > 0 && val != m_torrentConnectBoost) {
+        m_torrentConnectBoost = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Torrent Connect Boost [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
 // Main destructor
 Session::~Session()
 {
@@ -1115,8 +1189,13 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     if (isDHTEnabled())
         settingsPack.set_str(libt::settings_pack::dht_bootstrap_nodes, "dht.libtorrent.org:25401,router.bittorrent.com:6881,router.utorrent.com:6881,dht.transmissionbt.com:6881,dht.aelitis.com:6881");
     settingsPack.set_bool(libt::settings_pack::enable_lsd, isLSDEnabled());
+
     settingsPack.set_int(libt::settings_pack::min_announce_interval, minAnnounceInterval());
-    settingsPack.set_int(libt::settings_pack::strict_end_game_mode, strictEndGameMode());
+    settingsPack.set_bool(libt::settings_pack::strict_end_game_mode, strictEndGameMode());
+    settingsPack.set_bool(libt::settings_pack::low_prio_disk, lowPrioDisk());
+    settingsPack.set_bool(libt::settings_pack::smooth_connects, smoothConnects());
+    settingsPack.set_int(libt::settings_pack::tick_interval, tickInterval());
+    settingsPack.set_int(libt::settings_pack::torrent_connect_boost, torrentConnectBoost());
 }
 
 #else
@@ -1260,6 +1339,10 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
 
     sessionSettings.min_announce_interval = minAnnounceInterval();
     sessionSettings.strict_end_game_mode = strictEndGameMode();
+    sessionSettings.low_prio_disk = lowPrioDisk();
+    sessionSettings.smooth_connects = smoothConnects();
+    sessionSettings.tick_interval = tickInterval();
+    sessionSettings.torrent_connect_boost = torrentConnectBoost();
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.

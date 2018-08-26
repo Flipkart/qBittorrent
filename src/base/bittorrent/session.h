@@ -331,6 +331,14 @@ namespace BitTorrent
         int minAnnounceInterval() const;
         void setStrictEndGameMode(bool enabled);
         bool strictEndGameMode() const;
+        void setLowPrioDisk(bool enabled);
+        bool lowPrioDisk() const;
+        void setSmoothConnects(bool enabled);
+        bool smoothConnects() const;
+        void setTickInterval(int itvl);
+        int tickInterval() const;
+        void setTorrentConnectBoost(int val);
+        int torrentConnectBoost() const;
 
         TorrentHandle *findTorrent(const InfoHash &hash) const;
         QHash<InfoHash, TorrentHandle *> torrents() const;
@@ -575,7 +583,11 @@ namespace BitTorrent
         CachedSettingValue<QStringList> m_bannedIPs;
         
         CachedSettingValue<int> m_minAnnounceInterval;
-        CachedSettingValue<bool> m_strictEndGameMode;
+        CachedSettingValue<bool> m_strictEndGameMode; //default true
+        CachedSettingValue<bool> m_lowPrioDisk; //default true
+        CachedSettingValue<bool> m_smoothConnects; //default true
+        CachedSettingValue<int> m_tickInterval; //default 500
+        CachedSettingValue<int> m_torrentConnectBoost; //default 10
 
         // Order is important. This needs to be declared after its CachedSettingsValue
         // counterpart, because it uses it for initialization in the constructor

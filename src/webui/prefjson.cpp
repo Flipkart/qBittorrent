@@ -375,6 +375,14 @@ void prefjson::setPreferences(const QString& json)
         session->setMinAnnounceInterval(m["min_announce_interval"].toInt());
     if (m.contains("strict_end_game_mode"))
         session->setStrictEndGameMode(m["strict_end_game_mode"].toBool());
+    if (m.contains("low_prio_disk"))
+        session->setLowPrioDisk(m["low_prio_disk"].toBool());
+    if (m.contains("smooth_connects"))
+        session->setSmoothConnects(m["smooth_connects"].toBool());
+    if (m.contains("tick_interval"))
+        session->setTickInterval(m["tick_interval"].toInt());
+    if (m.contains("torrent_connect_boost"))
+        session->setTorrentConnectBoost(m["torrent_connect_boost"].toInt());
 
     // Web UI
     // Language
