@@ -383,6 +383,15 @@ void prefjson::setPreferences(const QString& json)
         session->setTickInterval(m["tick_interval"].toInt());
     if (m.contains("torrent_connect_boost"))
         session->setTorrentConnectBoost(m["torrent_connect_boost"].toInt());
+    
+    if (m.contains("request_timeout"))
+        session->setRequestTimeout(m["request_timeout"].toInt());
+    if (m.contains("inactivity_timeout"))
+        session->setInactivityTimeout(m["inactivity_timeout"].toInt());
+    if (m.contains("peer_timeout"))
+        session->setPeerTimeout(m["peer_timeout"].toInt());
+    if (m.contains("peer_connect_timeout"))
+        session->setPeerConnectTimeout(m["peer_connect_timeout"].toInt());
 
     // Web UI
     // Language

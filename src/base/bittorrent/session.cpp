@@ -276,12 +276,19 @@ Session::Session(QObject *parent)
     , m_isDisableAutoTMMWhenCategorySavePathChanged(BITTORRENT_SESSION_KEY("DisableAutoTMMTriggers/CategorySavePathChanged"), true)
     , m_isTrackerEnabled(BITTORRENT_KEY("TrackerEnabled"), false)
     , m_bannedIPs("State/BannedIPs")
+
     , m_minAnnounceInterval(BITTORRENT_SESSION_KEY("MinAnnounceInterval"), 10)
     , m_strictEndGameMode(BITTORRENT_SESSION_KEY("StrictEndGameMode"), true)
     , m_lowPrioDisk(BITTORRENT_SESSION_KEY("LowPrioDisk"), true)
     , m_smoothConnects(BITTORRENT_SESSION_KEY("SmoothConnects"), true)
     , m_tickInterval(BITTORRENT_SESSION_KEY("TickInterval"), 500)
-    , m_TorrentConnectBoost(BITTORRENT_SESSION_KEY("TorrentConnectBoost"), 10)
+    , m_torrentConnectBoost(BITTORRENT_SESSION_KEY("TorrentConnectBoost"), 10)
+
+    , m_requestTimeout(BITTORRENT_SESSION_KEY("RequestTimeout"), 50)
+    , m_inactivityTimeout(BITTORRENT_SESSION_KEY("InactivityTimeout"), 600)
+    , m_peerTimeout(BITTORRENT_SESSION_KEY("PeerTimeout"), 120)
+    , m_peerConnectTimeout(BITTORRENT_SESSION_KEY("PeerConnectTimeout"), 15)
+
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
     , m_extraLimit(0)
@@ -386,6 +393,11 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Smooth Connects [%1]").arg(QString::number(smoothConnects())), Log::INFO);
     logger->addMessage(tr("Tick Interval [%1]").arg(QString::number(tickInterval())), Log::INFO);
     logger->addMessage(tr("Torrent Connect Boost [%1]").arg(QString::number(torrentConnectBoost())), Log::INFO);
+
+    logger->addMessage(tr("Request Timeout [%1]").arg(QString::number(requestTimeout())), Log::INFO);
+    logger->addMessage(tr("Inactivity Timeout [%1]").arg(QString::number(inactivityTimeout())), Log::INFO);
+    logger->addMessage(tr("Peer Timeout [%1]").arg(QString::number(peerTimeout())), Log::INFO);
+    logger->addMessage(tr("Peer Connect Timeout [%1]").arg(QString::number(peerConnectTimeout())), Log::INFO);
 
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
@@ -900,6 +912,70 @@ void Session::setTorrentConnectBoost(int val)
     }
 }
 
+int Session::requestTimeout() const
+{
+    return m_requestTimeout;
+}
+
+void Session::setRequestTimeout(int val)
+{
+    if (val > 0 && val != m_requestTimeout) {
+        m_requestTimeout = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Request Timeout [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::inactivityTimeout() const
+{
+    return m_inactivityTimeout;
+}
+
+void Session::setInactivityTimeout(int val)
+{
+    if (val > 0 && val != m_inactivityTimeout) {
+        m_inactivityTimeout = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Inactivity Timeout [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::peerTimeout() const
+{
+    return m_peerTimeout;
+}
+
+void Session::setPeerTimeout(int val)
+{
+    if (val > 0 && val != m_peerTimeout) {
+        m_peerTimeout = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Peer Timeout [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::peerConnectTimeout() const
+{
+    return m_peerConnectTimeout;
+}
+
+void Session::setPeerConnectTimeout(int val)
+{
+    if (val > 0 && val != m_peerConnectTimeout) {
+        m_peerConnectTimeout = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Peer Connect Timeout [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
 // Main destructor
 Session::~Session()
 {
@@ -1196,6 +1272,11 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     settingsPack.set_bool(libt::settings_pack::smooth_connects, smoothConnects());
     settingsPack.set_int(libt::settings_pack::tick_interval, tickInterval());
     settingsPack.set_int(libt::settings_pack::torrent_connect_boost, torrentConnectBoost());
+
+    settingsPack.set_int(libt::settings_pack::request_timeout, requestTimeout());
+    settingsPack.set_int(libt::settings_pack::inactivity_timeout, inactivityTimeout());
+    settingsPack.set_int(libt::settings_pack::peer_timeout, peerTimeout());
+    settingsPack.set_int(libt::settings_pack::peer_connect_timeout, peerConnectTimeout());
 }
 
 #else
@@ -1343,6 +1424,11 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
     sessionSettings.smooth_connects = smoothConnects();
     sessionSettings.tick_interval = tickInterval();
     sessionSettings.torrent_connect_boost = torrentConnectBoost();
+
+    sessionSettings.request_timeout = requestTimeout();
+    sessionSettings.inactivity_timeout = inactivityTimeout();
+    sessionSettings.peer_timeout = peerTimeout();
+    sessionSettings.peer_connect_timeout = peerConnectTimeout();
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.
