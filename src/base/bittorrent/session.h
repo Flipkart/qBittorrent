@@ -373,6 +373,13 @@ namespace BitTorrent
         void setSendBuffWmFactor(int val);
         int sendBuffWmFactor() const;
 
+        void setSuggestMode(bool enabled);
+        bool suggestMode() const;
+        void setCoalesceReads(bool enabled);
+        bool coalesceReads() const;
+        void setCoalesceWrites(bool enabled);
+        bool coalesceWrites() const;
+
         TorrentHandle *findTorrent(const InfoHash &hash) const;
         QHash<InfoHash, TorrentHandle *> torrents() const;
         TorrentStatusReport torrentStatusReport() const;
@@ -640,6 +647,10 @@ namespace BitTorrent
         CachedSettingValue<int> m_sendBuffWm; //default 500 * 1024
         CachedSettingValue<int> m_sendBuffLowWm; //default 512
         CachedSettingValue<int> m_sendBuffWmFactor; //default 50
+
+        CachedSettingValue<bool> m_suggestMode; //default false
+        CachedSettingValue<bool> m_coalesceReads; //default false
+        CachedSettingValue<bool> m_coalesceWrites; //default false
 
         // Order is important. This needs to be declared after its CachedSettingsValue
         // counterpart, because it uses it for initialization in the constructor

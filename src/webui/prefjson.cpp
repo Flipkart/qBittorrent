@@ -417,6 +417,13 @@ void prefjson::setPreferences(const QString& json)
     if (m.contains("send_buffer_watermark_factor"))
         session->setSendBuffWmFactor(m["send_buffer_watermark_factor"].toInt());
 
+    if (m.contains("suggest_mode"))
+        session->setSuggestMode(m["suggest_mode"].toBool());
+    if (m.contains("coalesce_reads"))
+        session->setCoalesceReads(m["coalesce_reads"].toBool());
+    if (m.contains("coalesce_writes"))
+        session->setCoalesceWrites(m["coalesce_writes"].toBool());
+
     // Web UI
     // Language
     if (m.contains("locale")) {

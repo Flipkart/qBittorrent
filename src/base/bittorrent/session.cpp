@@ -303,6 +303,10 @@ Session::Session(QObject *parent)
     , m_sendBuffLowWm(BITTORRENT_SESSION_KEY("SendBufferLowWatermark"), 512)
     , m_sendBuffWmFactor(BITTORRENT_SESSION_KEY("SendBufferWatermarkFactor"), 50)
 
+    , m_suggestMode(BITTORRENT_SESSION_KEY("SuggestMode"), false)
+    , m_coalesceReads(BITTORRENT_SESSION_KEY("CoalesceReads"), false)
+    , m_coalesceWrites(BITTORRENT_SESSION_KEY("CoalesceWrites"), false)
+
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
     , m_extraLimit(0)
@@ -425,6 +429,10 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Send Buffer Watermark [%1]").arg(QString::number(sendBuffWm())), Log::INFO);
     logger->addMessage(tr("Send Buffer Low Watermark [%1]").arg(QString::number(sendBuffLowWm())), Log::INFO);
     logger->addMessage(tr("Send Buffer Watermark Factor [%1]").arg(QString::number(sendBuffWmFactor())), Log::INFO);
+
+    logger->addMessage(tr("Suggest Mode [%1]").arg(QString::number(suggestMode())), Log::INFO);
+    logger->addMessage(tr("Coalesce Reads [%1]").arg(QString::number(coalesceReads())), Log::INFO);
+    logger->addMessage(tr("Coalesce Writes [%1]").arg(QString::number(coalesceWrites())), Log::INFO);
 
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
@@ -1163,6 +1171,54 @@ void Session::setSendBuffWmFactor(int val)
     }
 }
 
+bool Session::suggestMode() const
+{
+    return m_suggestMode;
+}
+
+void Session::setSuggestMode(bool enabled)
+{
+    if (enabled != m_suggestMode) {
+        m_suggestMode = enabled;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Suggest Mode [%1]").arg(QString::number(enabled))
+                    , Log::INFO);
+    }
+}
+
+bool Session::coalesceReads() const
+{
+    return m_coalesceReads;
+}
+
+void Session::setCoalesceReads(bool enabled)
+{
+    if (enabled != m_coalesceReads) {
+        m_coalesceReads = enabled;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Coalesce Reads [%1]").arg(QString::number(enabled))
+                    , Log::INFO);
+    }
+}
+
+bool Session::coalesceWrites() const
+{
+    return m_coalesceWrites;
+}
+
+void Session::setCoalesceWrites(bool enabled)
+{
+    if (enabled != m_coalesceWrites) {
+        m_coalesceWrites = enabled;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Coalesce Writes [%1]").arg(QString::number(enabled))
+                    , Log::INFO);
+    }
+}
+
 // Main destructor
 Session::~Session()
 {
@@ -1477,6 +1533,12 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     settingsPack.set_int(libt::settings_pack::send_buffer_watermark, sendBuffWm());
     settingsPack.set_int(libt::settings_pack::send_buffer_low_watermark, sendBuffLowWm());
     settingsPack.set_int(libt::settings_pack::send_buffer_watermark_factor, sendBuffWmFactor());
+
+    settingsPack.set_int(libt::settings_pack::suggest_mode, suggestMode()
+                         ? libt::settings_pack::suggest_read_cache
+                         : libt::settings_pack::no_piece_suggestions);
+    settingsPack.set_bool(libt::settings_pack::coalesceReads, coalesceReads());
+    settingsPack.set_bool(libt::settings_pack::coalesceWrites, coalesceWrites());
 }
 
 #else
@@ -1642,6 +1704,13 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
     sessionSettings.send_buffer_watermark = sendBuffWm();
     sessionSettings.send_buffer_low_watermark = sendBuffLowWm();
     sessionSettings.send_buffer_watermark_factor = sendBuffWmFactor();    
+
+    sessionSettings.suggest_mode = suggestMode()
+                                           ? libt::session_settings::suggest_read_cache
+                                           : libt::session_settings::no_piece_suggestions;
+    sessionSettings.coalesce_reads = coalesceReads();
+    sessionSettings.coalesce_writes = coalesceWrites();
+
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.
