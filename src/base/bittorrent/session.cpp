@@ -289,6 +289,11 @@ Session::Session(QObject *parent)
     , m_peerTimeout(BITTORRENT_SESSION_KEY("PeerTimeout"), 120)
     , m_peerConnectTimeout(BITTORRENT_SESSION_KEY("PeerConnectTimeout"), 15)
 
+    , m_requestQueueTime(BITTORRENT_SESSION_KEY("RequestQueueTime"), 3)
+    , m_minReconnectTime(BITTORRENT_SESSION_KEY("MinReconnectTime"), 60)
+    , m_maxOutRequestQueue(BITTORRENT_SESSION_KEY("MaxOutRequestQueue"), 500)
+    , m_maxAllowedInRequestQueue(BITTORRENT_SESSION_KEY("MaxAllowedInRequestQueue"), 500)
+
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
     , m_extraLimit(0)
@@ -398,6 +403,11 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Inactivity Timeout [%1]").arg(QString::number(inactivityTimeout())), Log::INFO);
     logger->addMessage(tr("Peer Timeout [%1]").arg(QString::number(peerTimeout())), Log::INFO);
     logger->addMessage(tr("Peer Connect Timeout [%1]").arg(QString::number(peerConnectTimeout())), Log::INFO);
+
+    logger->addMessage(tr("Request Queue Time [%1]").arg(QString::number(requestQueueTime())), Log::INFO);
+    logger->addMessage(tr("Min Reconnect Time [%1]").arg(QString::number(minReconnectTime())), Log::INFO);
+    logger->addMessage(tr("Max Out Request Queue [%1]").arg(QString::number(maxOutRequestQueue())), Log::INFO);
+    logger->addMessage(tr("Max Allowed In Request Queue [%1]").arg(QString::number(maxAllowedInRequestQueue())), Log::INFO);
 
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
@@ -976,6 +986,70 @@ void Session::setPeerConnectTimeout(int val)
     }
 }
 
+int Session::requestQueueTime() const
+{
+    return m_requestQueueTime;
+}
+
+void Session::setRequestQueueTime(int val)
+{
+    if (val > 0 && val != m_requestQueueTime) {
+        m_requestQueueTime = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Request Queue Time [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::minReconnectTime() const
+{
+    return m_minReconnectTime;
+}
+
+void Session::setMinReconnectTime(int val)
+{
+    if (val > 0 && val != m_minReconnectTime) {
+        m_minReconnectTime = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Min Reconnect Time [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::maxOutRequestQueue() const
+{
+    return m_maxOutRequestQueue;
+}
+
+void Session::setMaxOutRequestQueue(int val)
+{
+    if (val > 0 && val != m_maxOutRequestQueue) {
+        m_maxOutRequestQueue = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Max Out Request Queue [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::maxAllowedInRequestQueue() const
+{
+    return m_maxAllowedInRequestQueue;
+}
+
+void Session::setMaxAllowedInRequestQueue(int val)
+{
+    if (val > 0 && val != m_maxAllowedInRequestQueue) {
+        m_maxAllowedInRequestQueue = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Max Allowed In Request Queue [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
 // Main destructor
 Session::~Session()
 {
@@ -1277,6 +1351,11 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     settingsPack.set_int(libt::settings_pack::inactivity_timeout, inactivityTimeout());
     settingsPack.set_int(libt::settings_pack::peer_timeout, peerTimeout());
     settingsPack.set_int(libt::settings_pack::peer_connect_timeout, peerConnectTimeout());
+
+    settingsPack.set_int(libt::settings_pack::request_queue_time, requestQueueTime());
+    settingsPack.set_int(libt::settings_pack::min_reconnect_time, minReconnectTime());
+    settingsPack.set_int(libt::settings_pack::max_out_request_queue, maxOutRequestQueue());
+    settingsPack.set_int(libt::settings_pack::max_allowed_in_request_queue, maxAllowedInRequestQueue());
 }
 
 #else
@@ -1429,6 +1508,11 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
     sessionSettings.inactivity_timeout = inactivityTimeout();
     sessionSettings.peer_timeout = peerTimeout();
     sessionSettings.peer_connect_timeout = peerConnectTimeout();
+
+    sessionSettings.request_queue_time = requestQueueTime();
+    sessionSettings.min_reconnect_time = minReconnectTime();
+    sessionSettings.max_out_request_queue = maxOutRequestQueue();
+    sessionSettings.max_allowed_in_request_queue = maxAllowedInRequestQueue();
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.

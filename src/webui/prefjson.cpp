@@ -393,6 +393,15 @@ void prefjson::setPreferences(const QString& json)
     if (m.contains("peer_connect_timeout"))
         session->setPeerConnectTimeout(m["peer_connect_timeout"].toInt());
 
+    if (m.contains("request_queue_time"))
+        session->setRequestQueueTime(m["request_queue_time"].toInt());
+    if (m.contains("min_reconnect_time"))
+        session->setMinReconnectTime(m["min_reconnect_time"].toInt());
+    if (m.contains("max_out_request_queue"))
+        session->setMaxOutRequestQueue(m["max_out_request_queue"].toInt());
+    if (m.contains("max_allowed_in_request_queue"))
+        session->setMaxAllowedInRequestQueue(m["max_allowed_in_request_queue"].toInt());
+
     // Web UI
     // Language
     if (m.contains("locale")) {

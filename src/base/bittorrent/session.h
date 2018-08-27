@@ -339,6 +339,7 @@ namespace BitTorrent
         int tickInterval() const;
         void setTorrentConnectBoost(int val);
         int torrentConnectBoost() const;
+
         void setRequestTimeout(int val);
         int requestTimeout() const;
         void setInactivityTimeout(int val);
@@ -347,6 +348,15 @@ namespace BitTorrent
         int peerTimeout() const;
         void setPeerConnectTimeout(int val);
         int peerConnectTimeout() const;
+
+        void setRequestQueueTime(int val);
+        int requestQueueTime() const;
+        void setMinReconnectTime(int val);
+        int minReconnectTime() const;
+        void setMaxOutRequestQueue(int val);
+        int maxOutRequestQueue() const;
+        void setMaxAllowedInRequestQueue(int val);
+        int maxAllowedInRequestQueue() const;
 
         TorrentHandle *findTorrent(const InfoHash &hash) const;
         QHash<InfoHash, TorrentHandle *> torrents() const;
@@ -596,11 +606,16 @@ namespace BitTorrent
         CachedSettingValue<bool> m_smoothConnects; //default true
         CachedSettingValue<int> m_tickInterval; //default 500
         CachedSettingValue<int> m_torrentConnectBoost; //default 10
+
         CachedSettingValue<int> m_requestTimeout; //default 50
         CachedSettingValue<int> m_inactivityTimeout; //default 600
         CachedSettingValue<int> m_peerTimeout; //default 120
         CachedSettingValue<int> m_peerConnectTimeout; //default 15
 
+        CachedSettingValue<int> m_requestQueueTime; //default 3
+        CachedSettingValue<int> m_minReconnectTime; //default 60
+        CachedSettingValue<int> m_maxOutRequestQueue; //default 500
+        CachedSettingValue<int> m_maxAllowedInRequestQueue; //default 500
 
         // Order is important. This needs to be declared after its CachedSettingsValue
         // counterpart, because it uses it for initialization in the constructor
