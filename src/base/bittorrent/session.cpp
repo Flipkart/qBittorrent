@@ -307,6 +307,9 @@ Session::Session(QObject *parent)
     , m_coalesceReads(BITTORRENT_SESSION_KEY("CoalesceReads"), false)
     , m_coalesceWrites(BITTORRENT_SESSION_KEY("CoalesceWrites"), false)
 
+    , m_maxQueuedDiskBytes(BITTORRENT_SESSION_KEY("MaxQueuedDiskBytes"), 1024 * 1024)
+    , m_cacheBufferChunkSize(BITTORRENT_SESSION_KEY("CacheBufferChunkSize"), 16)
+
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
     , m_extraLimit(0)
@@ -433,6 +436,9 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Suggest Mode [%1]").arg(QString::number(suggestMode())), Log::INFO);
     logger->addMessage(tr("Coalesce Reads [%1]").arg(QString::number(coalesceReads())), Log::INFO);
     logger->addMessage(tr("Coalesce Writes [%1]").arg(QString::number(coalesceWrites())), Log::INFO);
+
+    logger->addMessage(tr("Max Queued Disk Bytes [%1]").arg(QString::number(maxQueuedDiskBytes())), Log::INFO);
+    logger->addMessage(tr("Cache Buffer Chunk Size [%1]").arg(QString::number(cacheBufferChunkSize())), Log::INFO);
 
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
@@ -1219,6 +1225,38 @@ void Session::setCoalesceWrites(bool enabled)
     }
 }
 
+int Session::maxQueuedDiskBytes() const
+{
+    return m_maxQueuedDiskBytes;
+}
+
+void Session::setMaxQueuedDiskBytes(int val)
+{
+    if (val > 0 && val != m_maxQueuedDiskBytes) {
+        m_maxQueuedDiskBytes = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Max Queued Disk Bytes [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::cacheBufferChunkSize() const
+{
+    return m_cacheBufferChunkSize;
+}
+
+void Session::setCacheBufferChunkSize(int val)
+{
+    if (val > 0 && val != m_cacheBufferChunkSize) {
+        m_cacheBufferChunkSize = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Cache Buffer Chunk Size [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
 // Main destructor
 Session::~Session()
 {
@@ -1539,6 +1577,9 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
                          : libt::settings_pack::no_piece_suggestions);
     settingsPack.set_bool(libt::settings_pack::coalesceReads, coalesceReads());
     settingsPack.set_bool(libt::settings_pack::coalesceWrites, coalesceWrites());
+
+    settingsPack.set_int(libt::settings_pack::max_queued_disk_bytes, maxQueuedDiskBytes());
+    settingsPack.set_int(libt::settings_pack::cache_buffer_chunk_size, cacheBufferChunkSize());
 }
 
 #else
@@ -1711,6 +1752,8 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
     sessionSettings.coalesce_reads = coalesceReads();
     sessionSettings.coalesce_writes = coalesceWrites();
 
+    sessionSettings.max_queued_disk_bytes = maxQueuedDiskBytes();
+    sessionSettings.cache_buffer_chunk_size = cacheBufferChunkSize();
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.

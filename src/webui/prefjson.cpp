@@ -423,6 +423,15 @@ void prefjson::setPreferences(const QString& json)
         session->setCoalesceReads(m["coalesce_reads"].toBool());
     if (m.contains("coalesce_writes"))
         session->setCoalesceWrites(m["coalesce_writes"].toBool());
+    
+    if (m.contains("cache_size_mb"))
+        session->setDiskCacheSize(m["cache_size_mb"].toUInt());
+    if (m.contains("cache_expiry"))
+        session->setDiskCacheTTL(m["cache_expiry"].toUInt());
+    if (m.contains("max_queued_disk_bytes"))
+        session->setMaxQueuedDiskBytes(m["max_queued_disk_bytes"].toInt());
+    if (m.contains("cache_buffer_chunk_size"))
+        session->setCacheBufferChunkSize(m["cache_buffer_chunk_size"].toInt());
 
     // Web UI
     // Language
