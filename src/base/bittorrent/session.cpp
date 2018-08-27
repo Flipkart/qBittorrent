@@ -310,6 +310,12 @@ Session::Session(QObject *parent)
     , m_maxQueuedDiskBytes(BITTORRENT_SESSION_KEY("MaxQueuedDiskBytes"), 1024 * 1024)
     , m_cacheBufferChunkSize(BITTORRENT_SESSION_KEY("CacheBufferChunkSize"), 16)
 
+    , m_useDiskCachePool(BITTORRENT_SESSION_KEY("UseDiskCachePool"), false)
+    , m_filePoolSize(BITTORRENT_SESSION_KEY("FilePoolSize"), 40)
+    , m_allowedFastSetSize(BITTORRENT_SESSION_KEY("AllowedFastSetSize"), 10)
+    , m_sendSockBuffSize(BITTORRENT_SESSION_KEY("SendSocketBufferSize"), 0)
+    , m_recvSockBuffSize(BITTORRENT_SESSION_KEY("RecvSocketBufferSize"), 0)
+
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
     , m_extraLimit(0)
@@ -358,6 +364,7 @@ Session::Session(QObject *parent)
     sessionSettings.connection_speed = 20; // default is 10
     sessionSettings.no_connect_privileged_ports = false;
     sessionSettings.seed_choking_algorithm = libt::session_settings::fastest_upload;
+    sessionSettings.listen_queue_size = 100;
     configure(sessionSettings);
     m_nativeSession->set_settings(sessionSettings);
     configureListeningInterface();
@@ -439,6 +446,12 @@ Session::Session(QObject *parent)
 
     logger->addMessage(tr("Max Queued Disk Bytes [%1]").arg(QString::number(maxQueuedDiskBytes())), Log::INFO);
     logger->addMessage(tr("Cache Buffer Chunk Size [%1]").arg(QString::number(cacheBufferChunkSize())), Log::INFO);
+
+    logger->addMessage(tr("Use Disk Cache Pool [%1]").arg(QString::number(useDiskCachePool())), Log::INFO);
+    logger->addMessage(tr("File Pool Size [%1]").arg(QString::number(filePoolSize())), Log::INFO);
+    logger->addMessage(tr("Allowed Fast Set Size [%1]").arg(QString::number(allowedFastSetSize())), Log::INFO);
+    logger->addMessage(tr("Send Socket Buffer Size [%1]").arg(QString::number(sendSockBuffSize())), Log::INFO);
+    logger->addMessage(tr("Recv Socket Buffer Size [%1]").arg(QString::number(recvSockBuffSize())), Log::INFO);
 
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
@@ -1104,7 +1117,7 @@ int Session::connectionSpeed() const
 
 void Session::setConnectionSpeed(int val)
 {
-    if (val > 0 && val != m_connectionSpeed) {
+    if (val != m_connectionSpeed) {
         m_connectionSpeed = val;
         configureDeferred();
         Logger::instance()->addMessage(
@@ -1232,7 +1245,7 @@ int Session::maxQueuedDiskBytes() const
 
 void Session::setMaxQueuedDiskBytes(int val)
 {
-    if (val > 0 && val != m_maxQueuedDiskBytes) {
+    if (val != m_maxQueuedDiskBytes) {
         m_maxQueuedDiskBytes = val;
         configureDeferred();
         Logger::instance()->addMessage(
@@ -1248,11 +1261,91 @@ int Session::cacheBufferChunkSize() const
 
 void Session::setCacheBufferChunkSize(int val)
 {
-    if (val > 0 && val != m_cacheBufferChunkSize) {
+    if (val != m_cacheBufferChunkSize) {
         m_cacheBufferChunkSize = val;
         configureDeferred();
         Logger::instance()->addMessage(
                     tr("Cache Buffer Chunk Size [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+bool Session::useDiskCachePool() const
+{
+    return m_useDiskCachePool;
+}
+
+void Session::setUseDiskCachePool(bool enabled)
+{
+    if (enabled != m_useDiskCachePool) {
+        m_useDiskCachePool = enabled;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Use Disk Cache Pool [%1]").arg(QString::number(enabled))
+                    , Log::INFO);
+    }
+}
+
+int Session::filePoolSize() const
+{
+    return m_filePoolSize;
+}
+
+void Session::setFilePoolSize(int val)
+{
+    if (val != m_filePoolSize) {
+        m_filePoolSize = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("File Pool Size [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::allowedFastSetSize() const
+{
+    return m_allowedFastSetSize;
+}
+
+void Session::setAllowedFastSetSize(int val)
+{
+    if (val != m_allowedFastSetSize) {
+        m_allowedFastSetSize = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Allowed Fast Set Size [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::sendSockBuffSize() const
+{
+    return m_sendSockBuffSize;
+}
+
+void Session::setSendSockBuffSize(int val)
+{
+    if (val != m_sendSockBuffSize) {
+        m_sendSockBuffSize = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Send Socket Buffer Size [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::recvSockBuffSize() const
+{
+    return m_recvSockBuffSize;
+}
+
+void Session::setRecvSockBuffSize(int val)
+{
+    if (val != m_recvSockBuffSize) {
+        m_recvSockBuffSize = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Recv Socket Buffer Size [%1]").arg(QString::number(val))
                     , Log::INFO);
     }
 }
@@ -1580,6 +1673,12 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
 
     settingsPack.set_int(libt::settings_pack::max_queued_disk_bytes, maxQueuedDiskBytes());
     settingsPack.set_int(libt::settings_pack::cache_buffer_chunk_size, cacheBufferChunkSize());
+
+    settingsPack.set_bool(libt::settings_pack::use_disk_cache_pool, useDiskCachePool());
+    settingsPack.set_int(libt::settings_pack::file_pool_size, filePoolSize());
+    settingsPack.set_int(libt::settings_pack::allowed_fast_set_size, allowedFastSetSize());
+    settingsPack.set_int(libt::settings_pack::send_socket_buffer_size, sendSockBuffSize());
+    settingsPack.set_int(libt::settings_pack::receive_socket_buffer_size, recvSockBuffSize());
 }
 
 #else
@@ -1754,6 +1853,12 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
 
     sessionSettings.max_queued_disk_bytes = maxQueuedDiskBytes();
     sessionSettings.cache_buffer_chunk_size = cacheBufferChunkSize();
+
+    sessionSettings.use_disk_cache_pool = useDiskCachePool();
+    sessionSettings.file_pool_size = filePoolSize();
+    sessionSettings.allowed_fast_set_size = allowedFastSetSize();
+    sessionSettings.send_socket_buffer_size = sendSockBuffSize();
+    sessionSettings.recv_socket_buffer_size = recvSockBuffSize();
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.

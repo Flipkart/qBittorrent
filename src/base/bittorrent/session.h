@@ -385,6 +385,17 @@ namespace BitTorrent
         void setCacheBufferChunkSize(int val);
         int cacheBufferChunkSize() const;
 
+        void setUseDiskCachePool(bool enabled);
+        bool useDiskCachePool() const;
+        void setFilePoolSize(int val);
+        int filePoolSize() const;
+        void setAllowedFastSetSize(int val);
+        int allowedFastSetSize() const;
+        void setSendSockBuffSize(int val);
+        int sendSockBuffSize() const;
+        void setRecvSockBuffSize(int val);
+        int recvSockBuffSize() const;
+
         TorrentHandle *findTorrent(const InfoHash &hash) const;
         QHash<InfoHash, TorrentHandle *> torrents() const;
         TorrentStatusReport torrentStatusReport() const;
@@ -659,6 +670,12 @@ namespace BitTorrent
 
         CachedSettingValue<int> m_maxQueuedDiskBytes; //default 1024 * 1024
         CachedSettingValue<int> m_cacheBufferChunkSize; //default 16
+
+        CachedSettingValue<bool> m_useDiskCachePool; //default false        
+        CachedSettingValue<int> m_filePoolSize; //default 40
+        CachedSettingValue<int> m_allowedFastSetSize; //default 10
+        CachedSettingValue<int> m_sendSockBuffSize; //default 0
+        CachedSettingValue<int> m_recvSockBuffSize; //default 0
 
         // Order is important. This needs to be declared after its CachedSettingsValue
         // counterpart, because it uses it for initialization in the constructor

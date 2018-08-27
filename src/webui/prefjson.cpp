@@ -433,6 +433,17 @@ void prefjson::setPreferences(const QString& json)
     if (m.contains("cache_buffer_chunk_size"))
         session->setCacheBufferChunkSize(m["cache_buffer_chunk_size"].toInt());
 
+    if (m.contains("use_disk_cache_pool"))
+        session->setUseDiskCachePool(m["use_disk_cache_pool"].toBool());
+    if (m.contains("file_pool_size"))
+        session->setFilePoolSize(m["file_pool_size"].toInt());
+    if (m.contains("allowed_fast_set_size"))
+        session->setAllowedFastSetSize(m["allowed_fast_set_size"].toInt());
+    if (m.contains("send_socket_buffer_size"))
+        session->setSendSockBuffSize(m["send_socket_buffer_size"].toInt());
+    if (m.contains("recv_socket_buffer_size"))
+        session->setRecvSockBuffSize(m["recv_socket_buffer_size"].toInt());
+
     // Web UI
     // Language
     if (m.contains("locale")) {
