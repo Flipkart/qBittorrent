@@ -278,6 +278,8 @@ Session::Session(QObject *parent)
     , m_bannedIPs("State/BannedIPs")
 
     , m_minAnnounceInterval(BITTORRENT_SESSION_KEY("MinAnnounceInterval"), 10)
+    , m_lsdInterval(BITTORRENT_SESSION_KEY("LocalServiceAnnounceInterval"), 300)
+
     , m_strictEndGameMode(BITTORRENT_SESSION_KEY("StrictEndGameMode"), true)
     , m_lowPrioDisk(BITTORRENT_SESSION_KEY("LowPrioDisk"), true)
     , m_smoothConnects(BITTORRENT_SESSION_KEY("SmoothConnects"), true)
@@ -293,6 +295,9 @@ Session::Session(QObject *parent)
     , m_minReconnectTime(BITTORRENT_SESSION_KEY("MinReconnectTime"), 60)
     , m_maxOutRequestQueue(BITTORRENT_SESSION_KEY("MaxOutRequestQueue"), 500)
     , m_maxAllowedInRequestQueue(BITTORRENT_SESSION_KEY("MaxAllowedInRequestQueue"), 500)
+
+    , m_connectionSpeed(BITTORRENT_SESSION_KEY("ConnectionSpeed"), 20)
+    , m_connectionsSlack(BITTORRENT_SESSION_KEY("ConnectionsSlack"), 10)
 
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
@@ -393,6 +398,8 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Anonymous mode [%1]").arg(isAnonymousModeEnabled() ? tr("ON") : tr("OFF")), Log::INFO);
     
     logger->addMessage(tr("Min Announce Interval [%1]").arg(QString::number(minAnnounceInterval())), Log::INFO);
+    logger->addMessage(tr("Local Service Announce Interval [%1]").arg(QString::number(lsdInterval())), Log::INFO);
+
     logger->addMessage(tr("Strict End Game Mode [%1]").arg(QString::number(strictEndGameMode())), Log::INFO);
     logger->addMessage(tr("Low Prio Disk [%1]").arg(QString::number(lowPrioDisk())), Log::INFO);
     logger->addMessage(tr("Smooth Connects [%1]").arg(QString::number(smoothConnects())), Log::INFO);
@@ -408,6 +415,8 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Min Reconnect Time [%1]").arg(QString::number(minReconnectTime())), Log::INFO);
     logger->addMessage(tr("Max Out Request Queue [%1]").arg(QString::number(maxOutRequestQueue())), Log::INFO);
     logger->addMessage(tr("Max Allowed In Request Queue [%1]").arg(QString::number(maxAllowedInRequestQueue())), Log::INFO);
+    logger->addMessage(tr("Connection Speed [%1]").arg(QString::number(connectionSpeed())), Log::INFO);
+    logger->addMessage(tr("Connections Slack [%1]").arg(QString::number(connectionsSlack())), Log::INFO);
 
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
@@ -842,6 +851,22 @@ void Session::setMinAnnounceInterval(int itvl)
     }
 }
 
+int Session::lsdInterval() const
+{
+    return m_lsdInterval;
+}
+
+void Session::setLsdInterval(int itvl)
+{
+    if (itvl > 0 && itvl != m_lsdInterval) {
+        m_lsdInterval = itvl;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Local Service Announce Interval [%1]").arg(QString::number(itvl))
+                    , Log::INFO);
+    }
+}
+
 bool Session::strictEndGameMode() const
 {
     return m_strictEndGameMode;
@@ -1046,6 +1071,38 @@ void Session::setMaxAllowedInRequestQueue(int val)
         configureDeferred();
         Logger::instance()->addMessage(
                     tr("Max Allowed In Request Queue [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::connectionSpeed() const
+{
+    return m_connectionSpeed;
+}
+
+void Session::setConnectionSpeed(int val)
+{
+    if (val > 0 && val != m_connectionSpeed) {
+        m_connectionSpeed = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Connection Speed [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::connectionsSlack() const
+{
+    return m_connectionsSlack;
+}
+
+void Session::setConnectionsSlack(int val)
+{
+    if (val > 0 && val != m_connectionsSlack) {
+        m_connectionsSlack = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Connections Slack [%1]").arg(QString::number(val))
                     , Log::INFO);
     }
 }
@@ -1341,6 +1398,8 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     settingsPack.set_bool(libt::settings_pack::enable_lsd, isLSDEnabled());
 
     settingsPack.set_int(libt::settings_pack::min_announce_interval, minAnnounceInterval());
+    settingsPack.set_int(libt::settings_pack::local_service_announce_interval, lsdInterval());
+
     settingsPack.set_bool(libt::settings_pack::strict_end_game_mode, strictEndGameMode());
     settingsPack.set_bool(libt::settings_pack::low_prio_disk, lowPrioDisk());
     settingsPack.set_bool(libt::settings_pack::smooth_connects, smoothConnects());
@@ -1356,6 +1415,8 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     settingsPack.set_int(libt::settings_pack::min_reconnect_time, minReconnectTime());
     settingsPack.set_int(libt::settings_pack::max_out_request_queue, maxOutRequestQueue());
     settingsPack.set_int(libt::settings_pack::max_allowed_in_request_queue, maxAllowedInRequestQueue());
+    settingsPack.set_int(libt::settings_pack::connection_speed, connectionSpeed());
+    settingsPack.set_int(libt::settings_pack::connections_slack, connectionsSlack());
 }
 
 #else
@@ -1498,6 +1559,8 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
     sessionSettings.apply_ip_filter_to_trackers = isTrackerFilteringEnabled();
 
     sessionSettings.min_announce_interval = minAnnounceInterval();
+    sessionSettings.local_service_announce_interval = lsdInterval();
+
     sessionSettings.strict_end_game_mode = strictEndGameMode();
     sessionSettings.low_prio_disk = lowPrioDisk();
     sessionSettings.smooth_connects = smoothConnects();
@@ -1513,6 +1576,8 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
     sessionSettings.min_reconnect_time = minReconnectTime();
     sessionSettings.max_out_request_queue = maxOutRequestQueue();
     sessionSettings.max_allowed_in_request_queue = maxAllowedInRequestQueue();
+    sessionSettings.connection_speed = connectionSpeed();
+    sessionSettings.connections_slack = connectionsSlack();
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.

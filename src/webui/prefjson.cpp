@@ -373,6 +373,9 @@ void prefjson::setPreferences(const QString& json)
     // Extra settings applied to libtorrent
     if (m.contains("min_announce_interval"))
         session->setMinAnnounceInterval(m["min_announce_interval"].toInt());
+    if (m.contains("local_service_announce_interval"))
+        session->setLsdInterval(m["local_service_announce_interval"].toInt());
+    
     if (m.contains("strict_end_game_mode"))
         session->setStrictEndGameMode(m["strict_end_game_mode"].toBool());
     if (m.contains("low_prio_disk"))
@@ -401,6 +404,11 @@ void prefjson::setPreferences(const QString& json)
         session->setMaxOutRequestQueue(m["max_out_request_queue"].toInt());
     if (m.contains("max_allowed_in_request_queue"))
         session->setMaxAllowedInRequestQueue(m["max_allowed_in_request_queue"].toInt());
+
+    if (m.contains("connection_speed"))
+        session->setConnectionSpeed(m["connection_speed"].toInt());
+    if (m.contains("connections_slack"))
+        session->setConnectionsSlack(m["connections_slack"].toInt());
 
     // Web UI
     // Language
