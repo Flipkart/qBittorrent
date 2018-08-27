@@ -366,6 +366,13 @@ namespace BitTorrent
         void setConnectionsSlack(int val);
         int connectionsSlack() const;
 
+        void setSendBuffWm(int val);
+        int sendBuffWm() const;
+        void setSendBuffLowWm(int val);
+        int sendBuffLowWm() const;
+        void setSendBuffWmFactor(int val);
+        int sendBuffWmFactor() const;
+
         TorrentHandle *findTorrent(const InfoHash &hash) const;
         QHash<InfoHash, TorrentHandle *> torrents() const;
         TorrentStatusReport torrentStatusReport() const;
@@ -629,6 +636,10 @@ namespace BitTorrent
 
         CachedSettingValue<int> m_connectionSpeed; //default 20
         CachedSettingValue<int> m_connectionsSlack; //default 10
+
+        CachedSettingValue<int> m_sendBuffWm; //default 500 * 1024
+        CachedSettingValue<int> m_sendBuffLowWm; //default 512
+        CachedSettingValue<int> m_sendBuffWmFactor; //default 50
 
         // Order is important. This needs to be declared after its CachedSettingsValue
         // counterpart, because it uses it for initialization in the constructor

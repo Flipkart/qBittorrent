@@ -410,6 +410,13 @@ void prefjson::setPreferences(const QString& json)
     if (m.contains("connections_slack"))
         session->setConnectionsSlack(m["connections_slack"].toInt());
 
+    if (m.contains("send_buffer_watermark"))
+        session->setSendBuffWm(m["send_buffer_watermark"].toInt());
+    if (m.contains("send_buffer_low_watermark"))
+        session->setSendBuffLowWm(m["send_buffer_low_watermark"].toInt());
+    if (m.contains("send_buffer_watermark_factor"))
+        session->setSendBuffWmFactor(m["send_buffer_watermark_factor"].toInt());
+
     // Web UI
     // Language
     if (m.contains("locale")) {

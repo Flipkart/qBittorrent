@@ -299,6 +299,10 @@ Session::Session(QObject *parent)
     , m_connectionSpeed(BITTORRENT_SESSION_KEY("ConnectionSpeed"), 20)
     , m_connectionsSlack(BITTORRENT_SESSION_KEY("ConnectionsSlack"), 10)
 
+    , m_sendBuffWm(BITTORRENT_SESSION_KEY("SendBufferWatermark"), 500 * 1024)
+    , m_sendBuffLowWm(BITTORRENT_SESSION_KEY("SendBufferLowWatermark"), 512)
+    , m_sendBuffWmFactor(BITTORRENT_SESSION_KEY("SendBufferWatermarkFactor"), 50)
+
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
     , m_extraLimit(0)
@@ -417,6 +421,10 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Max Allowed In Request Queue [%1]").arg(QString::number(maxAllowedInRequestQueue())), Log::INFO);
     logger->addMessage(tr("Connection Speed [%1]").arg(QString::number(connectionSpeed())), Log::INFO);
     logger->addMessage(tr("Connections Slack [%1]").arg(QString::number(connectionsSlack())), Log::INFO);
+
+    logger->addMessage(tr("Send Buffer Watermark [%1]").arg(QString::number(sendBuffWm())), Log::INFO);
+    logger->addMessage(tr("Send Buffer Low Watermark [%1]").arg(QString::number(sendBuffLowWm())), Log::INFO);
+    logger->addMessage(tr("Send Buffer Watermark Factor [%1]").arg(QString::number(sendBuffWmFactor())), Log::INFO);
 
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
@@ -1107,6 +1115,54 @@ void Session::setConnectionsSlack(int val)
     }
 }
 
+int Session::sendBuffWm() const
+{
+    return m_sendBuffWm;
+}
+
+void Session::setSendBuffWm(int val)
+{
+    if (val > 0 && val != m_sendBuffWm) {
+        m_sendBuffWm = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Send Buffer Watermark [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::sendBuffLowWm() const
+{
+    return m_sendBuffLowWm;
+}
+
+void Session::setSendBuffLowWm(int val)
+{
+    if (val > 0 && val != m_sendBuffLowWm) {
+        m_sendBuffLowWm = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Send Buffer Low Watermark [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::sendBuffWmFactor() const
+{
+    return m_sendBuffWmFactor;
+}
+
+void Session::setSendBuffWmFactor(int val)
+{
+    if (val > 0 && val != m_sendBuffWmFactor) {
+        m_sendBuffWmFactor = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Send Buffer Watermark Factor [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
 // Main destructor
 Session::~Session()
 {
@@ -1417,6 +1473,10 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     settingsPack.set_int(libt::settings_pack::max_allowed_in_request_queue, maxAllowedInRequestQueue());
     settingsPack.set_int(libt::settings_pack::connection_speed, connectionSpeed());
     settingsPack.set_int(libt::settings_pack::connections_slack, connectionsSlack());
+
+    settingsPack.set_int(libt::settings_pack::send_buffer_watermark, sendBuffWm());
+    settingsPack.set_int(libt::settings_pack::send_buffer_low_watermark, sendBuffLowWm());
+    settingsPack.set_int(libt::settings_pack::send_buffer_watermark_factor, sendBuffWmFactor());
 }
 
 #else
@@ -1578,6 +1638,10 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
     sessionSettings.max_allowed_in_request_queue = maxAllowedInRequestQueue();
     sessionSettings.connection_speed = connectionSpeed();
     sessionSettings.connections_slack = connectionsSlack();
+
+    sessionSettings.send_buffer_watermark = sendBuffWm();
+    sessionSettings.send_buffer_low_watermark = sendBuffLowWm();
+    sessionSettings.send_buffer_watermark_factor = sendBuffWmFactor();    
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.
