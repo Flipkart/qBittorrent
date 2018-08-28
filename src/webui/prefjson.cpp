@@ -155,6 +155,40 @@ QByteArray prefjson::getPreferences()
     data["add_trackers_enabled"] = session->isAddTrackersEnabled();
     data["add_trackers"] = session->additionalTrackers();
 
+    //Extra settings applied to libtorrent
+    data["min_announce_interval"] = session->minAnnounceInterval();
+    data["local_service_announce_interval"] = session->lsdInterval();
+    data["strict_end_game_mode"] = session->strictEndGameMode();
+    data["low_prio_disk"] = session->lowPrioDisk();
+    data["smooth_connects"] = session->smoothConnects();
+    data["tick_interval"] = session->tickInterval();
+    data["torrent_connect_boost"] = session->torrentConnectBoost();
+    data["request_timeout"] = session->requestTimeout();
+    data["inactivity_timeout"] = session->inactivityTimeout();
+    data["peer_timeout"] = session->peerTimeout();
+    data["peer_connect_timeout"] = session->peerConnectTimeout();
+    data["request_queue_time"] = session->requestQueueTime();
+    data["min_reconnect_time"] = session->minReconnectTime();
+    data["max_out_request_queue"] = session->maxOutRequestQueue();
+    data["max_allowed_in_request_queue"] = session->maxAllowedInRequestQueue();
+    data["connection_speed"] = session->connectionSpeed();
+    data["connections_slack"] = session->connectionsSlack();
+    data["send_buffer_watermark"] = session->sendBuffWm();
+    data["send_buffer_low_watermark"] = session->sendBuffLowWm();
+    data["send_buffer_watermark_factor"] = session->sendBuffWmFactor();
+    data["suggest_mode"] = session->suggestMode();
+    data["coalesce_reads"] = session->coalesceReads();
+    data["coalesce_writes"] = session->coalesceWrites();
+    data["cache_size_mb"] = session->diskCacheSize();
+    data["cache_expiry"] = session->diskCacheTTL();
+    data["max_queued_disk_bytes"] = session->maxQueuedDiskBytes();
+    data["cache_buffer_chunk_size"] = session->cacheBufferChunkSize();
+    data["use_disk_cache_pool"] = session->useDiskCachePool();
+    data["file_pool_size"] = session->filePoolSize();
+    data["allowed_fast_set_size"] = session->allowedFastSetSize();
+    data["send_socket_buffer_size"] = session->sendSockBuffSize();
+    data["recv_socket_buffer_size"] = session->recvSockBuffSize();
+
     // Web UI
     // Language
     data["locale"] = pref->getLocale();
