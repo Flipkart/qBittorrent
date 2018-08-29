@@ -188,6 +188,9 @@ QByteArray prefjson::getPreferences()
     data["allowed_fast_set_size"] = session->allowedFastSetSize();
     data["send_socket_buffer_size"] = session->sendSockBuffSize();
     data["recv_socket_buffer_size"] = session->recvSockBuffSize();
+    data["guided_read_cache"] = session->guidedReadCache();
+    data["default_cache_min_age"] = session->defaultCacheMinAge();
+    data["max_suggest_pieces"] = session->maxSuggestPieces();
 
     // Web UI
     // Language
@@ -477,6 +480,13 @@ void prefjson::setPreferences(const QString& json)
         session->setSendSockBuffSize(m["send_socket_buffer_size"].toInt());
     if (m.contains("recv_socket_buffer_size"))
         session->setRecvSockBuffSize(m["recv_socket_buffer_size"].toInt());
+
+    if (m.contains("guided_read_cache"))
+        session->setGuidedReadCache(m["guided_read_cache"].toBool());
+    if (m.contains("default_cache_min_age"))
+        session->setDefaultCacheMinAge(m["default_cache_min_age"].toInt());
+    if (m.contains("max_suggest_pieces"))
+        session->setMaxSuggestPieces(m["max_suggest_pieces"].toInt());
 
     // Web UI
     // Language

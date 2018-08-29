@@ -316,6 +316,10 @@ Session::Session(QObject *parent)
     , m_sendSockBuffSize(BITTORRENT_SESSION_KEY("SendSocketBufferSize"), 0)
     , m_recvSockBuffSize(BITTORRENT_SESSION_KEY("RecvSocketBufferSize"), 0)
 
+    , m_guidedReadCache(BITTORRENT_SESSION_KEY("GuidedReadCache"), false)
+    , m_defaultCacheMinAge(BITTORRENT_SESSION_KEY("DefaultCacheMinAge"), 1)
+    , m_maxSuggestPieces(BITTORRENT_SESSION_KEY("MaxSuggestPieces"), 10)
+
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
     , m_extraLimit(0)
@@ -452,6 +456,10 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Allowed Fast Set Size [%1]").arg(QString::number(allowedFastSetSize())), Log::INFO);
     logger->addMessage(tr("Send Socket Buffer Size [%1]").arg(QString::number(sendSockBuffSize())), Log::INFO);
     logger->addMessage(tr("Recv Socket Buffer Size [%1]").arg(QString::number(recvSockBuffSize())), Log::INFO);
+
+    logger->addMessage(tr("Guided Read Cache [%1]").arg(QString::number(guidedReadCache())), Log::INFO);
+    logger->addMessage(tr("Default Cache Min Age [%1]").arg(QString::number(defaultCacheMinAge())), Log::INFO);
+    logger->addMessage(tr("Max Suggest Pieces [%1]").arg(QString::number(maxSuggestPieces())), Log::INFO);
 
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
@@ -1350,6 +1358,55 @@ void Session::setRecvSockBuffSize(int val)
     }
 }
 
+bool Session::guidedReadCache() const
+{
+    return m_guidedReadCache;
+}
+
+void Session::setGuidedReadCache(bool enabled)
+{
+    if (enabled != m_guidedReadCache) {
+        m_guidedReadCache = enabled;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Guided Read Cache [%1]").arg(QString::number(enabled))
+                    , Log::INFO);
+    }
+}
+
+int Session::defaultCacheMinAge() const
+{
+    return m_defaultCacheMinAge;
+}
+
+void Session::setDefaultCacheMinAge(int val)
+{
+    if (val != m_defaultCacheMinAge) {
+        m_defaultCacheMinAge = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Default Cache Min Age [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+int Session::maxSuggestPieces() const
+{
+    return m_maxSuggestPieces;
+}
+
+void Session::setMaxSuggestPieces(int val)
+{
+    if (val != m_maxSuggestPieces) {
+        m_maxSuggestPieces = val;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Max Suggest Pieces [%1]").arg(QString::number(val))
+                    , Log::INFO);
+    }
+}
+
+
 // Main destructor
 Session::~Session()
 {
@@ -1679,6 +1736,10 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     settingsPack.set_int(libt::settings_pack::allowed_fast_set_size, allowedFastSetSize());
     settingsPack.set_int(libt::settings_pack::send_socket_buffer_size, sendSockBuffSize());
     settingsPack.set_int(libt::settings_pack::receive_socket_buffer_size, recvSockBuffSize());
+
+    settingsPack.set_bool(libt::settings_pack::guided_read_cache, guidedReadCache());
+    settingsPack.set_int(libt::settings_pack::default_cache_min_age, defaultCacheMinAge());
+    settingsPack.set_int(libt::settings_pack::max_suggest_pieces, maxSuggestPieces());
 }
 
 #else
@@ -1859,6 +1920,10 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
     sessionSettings.allowed_fast_set_size = allowedFastSetSize();
     sessionSettings.send_socket_buffer_size = sendSockBuffSize();
     sessionSettings.recv_socket_buffer_size = recvSockBuffSize();
+
+    sessionSettings.guided_read_cache = guidedReadCache();
+    sessionSettings.default_cache_min_age = defaultCacheMinAge();
+    sessionSettings.max_suggest_pieces = maxSuggestPieces();
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.

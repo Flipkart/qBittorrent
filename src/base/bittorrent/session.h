@@ -396,6 +396,13 @@ namespace BitTorrent
         void setRecvSockBuffSize(int val);
         int recvSockBuffSize() const;
 
+        void setGuidedReadCache(bool enabled);
+        bool guidedReadCache() const;
+        void setDefaultCacheMinAge(int val);
+        int defaultCacheMinAge() const;
+        void setMaxSuggestPieces(int val);
+        int maxSuggestPieces() const;
+
         TorrentHandle *findTorrent(const InfoHash &hash) const;
         QHash<InfoHash, TorrentHandle *> torrents() const;
         TorrentStatusReport torrentStatusReport() const;
@@ -676,6 +683,10 @@ namespace BitTorrent
         CachedSettingValue<int> m_allowedFastSetSize; //default 10
         CachedSettingValue<int> m_sendSockBuffSize; //default 0
         CachedSettingValue<int> m_recvSockBuffSize; //default 0
+
+        CachedSettingValue<bool> m_guidedReadCache; //default false
+        CachedSettingValue<int> m_defaultCacheMinAge; //default 1
+        CachedSettingValue<int> m_maxSuggestPieces; //default 10
 
         // Order is important. This needs to be declared after its CachedSettingsValue
         // counterpart, because it uses it for initialization in the constructor
