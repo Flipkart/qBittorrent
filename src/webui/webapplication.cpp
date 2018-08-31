@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "base/iconprovider.h"
+#include "base/logger.h"
 #include "base/utils/misc.h"
 #include "base/utils/fs.h"
 #include "base/utils/string.h"
@@ -115,6 +116,7 @@ QMap<QString, QMap<QString, WebApplication::Action> > WebApplication::initialize
     ADD_ACTION(command, decreasePrio);
     ADD_ACTION(command, topPrio);
     ADD_ACTION(command, bottomPrio);
+    ADD_ACTION(command, setLocation);
     ADD_ACTION(command, recheck);
     ADD_ACTION(command, setCategory);
     ADD_ACTION(command, addCategory);
@@ -733,6 +735,28 @@ void WebApplication::action_command_bottomPrio()
 
     QStringList hashes = request().posts["hashes"].split("|");
     BitTorrent::Session::instance()->bottomTorrentsPriority(hashes);
+}
+
+void WebApplication::action_command_setLocation()
+{
+    CHECK_URI(0);
+    CHECK_PARAMETERS("hashes" << "location");
+
+    QStringList hashes = request().posts["hashes"].split("|");
+    QString newLocation = request().posts["location"].trimmed();
+
+    // check if location valid
+    if(newLocation.isEmpty() || !QDir(newLocation).exists()) return;
+
+    foreach (const QString &hash, hashes) {
+        BitTorrent::TorrentHandle *const torrent = BitTorrent::Session::instance()->findTorrent(hash);
+        if (torrent) {
+            const QString oldLocation = torrent->savePath();
+            Logger::instance()->addMessage(tr("WebUI Set Location: moving '%1' [infohash=%2], from %3 to %4").arg(torrent->name()).arg(hash).arg(oldLocation).arg(newLocation));
+
+            torrent->move(Utils::Fs::expandPathAbs(newLocation));
+        }
+    }
 }
 
 void WebApplication::action_command_recheck()
