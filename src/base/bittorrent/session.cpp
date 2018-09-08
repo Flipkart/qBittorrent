@@ -320,6 +320,8 @@ Session::Session(QObject *parent)
     , m_defaultCacheMinAge(BITTORRENT_SESSION_KEY("DefaultCacheMinAge"), 1)
     , m_maxSuggestPieces(BITTORRENT_SESSION_KEY("MaxSuggestPieces"), 10)
 
+    , m_allowReorderedDiskOperations(BITTORRENT_SESSION_KEY("AllowReorderedDiskOperations"), true)
+
     , m_wasPexEnabled(m_isPeXEnabled)
     , m_numResumeData(0)
     , m_extraLimit(0)
@@ -460,6 +462,8 @@ Session::Session(QObject *parent)
     logger->addMessage(tr("Guided Read Cache [%1]").arg(QString::number(guidedReadCache())), Log::INFO);
     logger->addMessage(tr("Default Cache Min Age [%1]").arg(QString::number(defaultCacheMinAge())), Log::INFO);
     logger->addMessage(tr("Max Suggest Pieces [%1]").arg(QString::number(maxSuggestPieces())), Log::INFO);
+
+    logger->addMessage(tr("Allow Reordered Disk Operations [%1]").arg(QString::number(allowReorderedDiskOperations())), Log::INFO);
 
     logger->addMessage(tr("Encryption support [%1]")
                        .arg(encryption() == 0 ? tr("ON") : encryption() == 1 ? tr("FORCED") : tr("OFF"))
@@ -1407,6 +1411,22 @@ void Session::setMaxSuggestPieces(int val)
 }
 
 
+bool Session::allowReorderedDiskOperations() const
+{
+    return m_allowReorderedDiskOperations;
+}
+
+void Session::setAllowReorderedDiskOperations(bool enabled)
+{
+    if (enabled != m_allowReorderedDiskOperations) {
+        m_allowReorderedDiskOperations = enabled;
+        configureDeferred();
+        Logger::instance()->addMessage(
+                    tr("Allow Reordered Disk Operations [%1]").arg(QString::number(enabled))
+                    , Log::INFO);
+    }
+}
+
 // Main destructor
 Session::~Session()
 {
@@ -1740,6 +1760,8 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     settingsPack.set_bool(libt::settings_pack::guided_read_cache, guidedReadCache());
     settingsPack.set_int(libt::settings_pack::default_cache_min_age, defaultCacheMinAge());
     settingsPack.set_int(libt::settings_pack::max_suggest_pieces, maxSuggestPieces());
+
+    settingsPack.set_bool(libt::settings_pack::allow_reordered_disk_operations, allowReorderedDiskOperations());
 }
 
 #else
@@ -1924,6 +1946,8 @@ void Session::configure(libtorrent::session_settings &sessionSettings)
     sessionSettings.guided_read_cache = guidedReadCache();
     sessionSettings.default_cache_min_age = defaultCacheMinAge();
     sessionSettings.max_suggest_pieces = maxSuggestPieces();
+
+    sessionSettings.allow_reordered_disk_operations = allowReorderedDiskOperations();
 
     if (isDHTEnabled()) {
         // Add first the routers and then start DHT.

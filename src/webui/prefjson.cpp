@@ -192,6 +192,8 @@ QByteArray prefjson::getPreferences()
     data["default_cache_min_age"] = session->defaultCacheMinAge();
     data["max_suggest_pieces"] = session->maxSuggestPieces();
 
+    data["allow_reordered_disk_operations"] = session->allowReorderedDiskOperations();
+
     // Web UI
     // Language
     data["locale"] = pref->getLocale();
@@ -487,6 +489,9 @@ void prefjson::setPreferences(const QString& json)
         session->setDefaultCacheMinAge(m["default_cache_min_age"].toInt());
     if (m.contains("max_suggest_pieces"))
         session->setMaxSuggestPieces(m["max_suggest_pieces"].toInt());
+
+    if (m.contains("allow_reordered_disk_operations"))
+        session->setAllowReorderedDiskOperations(m["allow_reordered_disk_operations"].toBool());
 
     // Web UI
     // Language

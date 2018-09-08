@@ -403,6 +403,9 @@ namespace BitTorrent
         void setMaxSuggestPieces(int val);
         int maxSuggestPieces() const;
 
+        void setAllowReorderedDiskOperations(bool enabled);
+        bool allowReorderedDiskOperations() const;
+
         TorrentHandle *findTorrent(const InfoHash &hash) const;
         QHash<InfoHash, TorrentHandle *> torrents() const;
         TorrentStatusReport torrentStatusReport() const;
@@ -687,6 +690,8 @@ namespace BitTorrent
         CachedSettingValue<bool> m_guidedReadCache; //default false
         CachedSettingValue<int> m_defaultCacheMinAge; //default 1
         CachedSettingValue<int> m_maxSuggestPieces; //default 10
+
+        CachedSettingValue<bool> m_allowReorderedDiskOperations; //default true
 
         // Order is important. This needs to be declared after its CachedSettingsValue
         // counterpart, because it uses it for initialization in the constructor
