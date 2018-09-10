@@ -117,6 +117,7 @@ QMap<QString, QMap<QString, WebApplication::Action> > WebApplication::initialize
     ADD_ACTION(command, topPrio);
     ADD_ACTION(command, bottomPrio);
     ADD_ACTION(command, setLocation);
+    ADD_ACTION(command, setAllowReorderedDiskOperations);
     ADD_ACTION(command, recheck);
     ADD_ACTION(command, setCategory);
     ADD_ACTION(command, addCategory);
@@ -757,6 +758,15 @@ void WebApplication::action_command_setLocation()
             torrent->move(Utils::Fs::expandPathAbs(newLocation));
         }
     }
+}
+
+void WebApplication::action_command_setAllowReorderedDiskOperations()
+{
+    CHECK_URI(0);
+    CHECK_PARAMETERS("value");
+
+    bool enabled = request().posts["value"] == "true";
+    BitTorrent::Session::instance()->setAllowReorderedDiskOperations(enabled);
 }
 
 void WebApplication::action_command_recheck()
