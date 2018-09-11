@@ -95,6 +95,34 @@ AddTorrentData::AddTorrentData(const AddTorrentParams &params)
 {
 }
 
+// TorrentMoveStatus
+
+TorrentMoveStatus::TorrentMoveStatus(int value)
+    : m_value(value)
+{
+}
+
+QString TorrentMoveStatus::toString() const
+{
+    switch (m_value) {
+    case NotStarted:
+        return QLatin1String("");
+    case Running:
+        return QLatin1String("running");
+    case Completed:
+        return QLatin1String("completed");
+    case Failed:
+        return QLatin1String("failed");
+    default:
+        return QLatin1String("unknown");
+    }
+}
+
+TorrentMoveStatus::operator int() const
+{
+    return m_value;
+}
+
 // TorrentState
 
 TorrentState::TorrentState(int value)
@@ -189,6 +217,7 @@ TorrentHandle::TorrentHandle(Session *session, const libtorrent::torrent_handle 
     , m_session(session)
     , m_nativeHandle(nativeHandle)
     , m_state(TorrentState::Unknown)
+    , m_moveStatus(TorrentMoveStatus::NotStarted)
     , m_renameCount(0)
     , m_useAutoTMM(data.savePath.isEmpty())
     , m_name(data.name)
@@ -1135,6 +1164,11 @@ bool TorrentHandle::setCategory(const QString &category)
     return true;
 }
 
+TorrentMoveStatus TorrentHandle::moveStatus()
+{
+    return m_moveStatus;
+}
+
 void TorrentHandle::move(QString path)
 {
     m_useAutoTMM = false;
@@ -1267,6 +1301,8 @@ void TorrentHandle::moveStorage(const QString &newPath)
         qDebug("move storage: %s to %s", qPrintable(oldPath), qPrintable(newPath));
         // Actually move the storage
         m_nativeHandle.move_storage(newPath.toUtf8().constData());
+
+        m_moveStatus = TorrentMoveStatus::Running;
         m_oldPath = oldPath;
         m_newPath = newPath;
     }
@@ -1329,9 +1365,13 @@ void TorrentHandle::handleStorageMovedAlert(libtorrent::storage_moved_alert *p)
         return;
     }
 
+    Logger::instance()->addMessage(tr("Torrent '%1' is successfully moved from %2 to %3")
+                                .arg(name()).arg(m_oldPath).arg(m_newPath), Log::INFO);
+
     qDebug("Torrent is successfully moved from %s to %s", qPrintable(m_oldPath), qPrintable(m_newPath));
     updateStatus();
 
+    m_moveStatus = TorrentMoveStatus::Completed;
     m_newPath.clear();
     if (!m_queuedPath.isEmpty()) {
         moveStorage(m_queuedPath);
@@ -1354,9 +1394,10 @@ void TorrentHandle::handleStorageMovedFailedAlert(libtorrent::storage_moved_fail
         return;
     }
 
-    Logger::instance()->addMessage(tr("Could not move torrent: '%1'. Reason: %2")
+    Logger::instance()->addMessage(tr("Could not move torrent '%1': %2")
                                    .arg(name()).arg(Utils::String::fromStdString(p->message())), Log::CRITICAL);
 
+    m_moveStatus = TorrentMoveStatus::Failed;
     m_newPath.clear();
     if (!m_queuedPath.isEmpty()) {
         moveStorage(m_queuedPath);
