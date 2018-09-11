@@ -109,6 +109,23 @@ namespace BitTorrent
         AddTorrentData(const AddTorrentParams &params);
     };
 
+    class TorrentMoveStatus
+    {
+        public:
+            enum
+            {
+                NotStarted,
+                Running,
+                Completed,
+                Failed,
+            };
+            TorrentMoveStatus(int value);
+            operator int() const;
+            QString toString() const;
+        private:
+            int m_value;
+    };
+
     struct TrackerInfo
     {
         QString lastMessage;
@@ -320,6 +337,7 @@ namespace BitTorrent
         void pause();
         void resume(bool forced = false);
         void move(QString path);
+        TorrentMoveStatus moveStatus();
         void forceReannounce(int index = -1);
         void forceDHTAnnounce();
         void forceRecheck();
@@ -401,6 +419,7 @@ namespace BitTorrent
 
         InfoHash m_hash;
 
+        TorrentMoveStatus m_moveStatus;
         QString m_oldPath;
         QString m_newPath;
         // m_queuedPath is where files should be moved to,
