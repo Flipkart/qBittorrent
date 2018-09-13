@@ -493,6 +493,7 @@ namespace BitTorrent
 
     private slots:
         void configureDeferred();
+        void configureSync();
         void readAlerts();
         void refresh();
         void processBigRatios();

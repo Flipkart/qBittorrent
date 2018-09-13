@@ -1418,9 +1418,12 @@ bool Session::allowReorderedDiskOperations() const
 
 void Session::setAllowReorderedDiskOperations(bool enabled)
 {
+    qDebug() << "set allow reordered disk operations from" <<  m_allowReorderedDiskOperations.value() << "to" <<  enabled;
     if (enabled != m_allowReorderedDiskOperations) {
+        QWriteLocker locker(&m_lock);
         m_allowReorderedDiskOperations = enabled;
-        configureDeferred();
+        //configureDeferred(); // Caveat: configuration might not be updated immediately as its async call.
+        configureSync();
         Logger::instance()->addMessage(
                     tr("Allow Reordered Disk Operations [%1]").arg(QString::number(enabled))
                     , Log::INFO);
@@ -1494,10 +1497,18 @@ void Session::adjustLimits()
 // Set BitTorrent session configuration
 void Session::configure()
 {
-    qDebug("Configuring session");
     if (!m_deferredConfigureScheduled) return; // Obtaining the lock is expensive, let's check early
     QWriteLocker locker(&m_lock);
     if (!m_deferredConfigureScheduled) return; // something might have changed while we were getting the lock
+    configureSync();
+    m_deferredConfigureScheduled = false;
+}
+
+// Set BitTorrent session configuration synchronously. make sure you take
+// QWriteLocker before calling this function.
+void Session::configureSync()
+{
+    qDebug("Configuring session");
 #if LIBTORRENT_VERSION_NUM < 10100
     libt::session_settings sessionSettings = m_nativeSession->settings();
     configure(sessionSettings);
@@ -1515,8 +1526,6 @@ void Session::configure()
             disableIPFilter();
         m_IPFilteringChanged = false;
     }
-
-    m_deferredConfigureScheduled = false;
     qDebug("Session configured");
 }
 
