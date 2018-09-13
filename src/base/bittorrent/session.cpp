@@ -1424,6 +1424,7 @@ void Session::setAllowReorderedDiskOperations(bool enabled)
         m_allowReorderedDiskOperations = enabled;
         //configureDeferred(); // Caveat: configuration might not be updated immediately as its async call.
         configureSync();
+        m_deferredConfigureScheduled = false;
         Logger::instance()->addMessage(
                     tr("Allow Reordered Disk Operations [%1]").arg(QString::number(enabled))
                     , Log::INFO);

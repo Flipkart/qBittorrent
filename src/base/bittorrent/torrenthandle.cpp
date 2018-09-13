@@ -1371,7 +1371,6 @@ void TorrentHandle::handleStorageMovedAlert(libtorrent::storage_moved_alert *p)
     qDebug("Torrent is successfully moved from %s to %s", qPrintable(m_oldPath), qPrintable(m_newPath));
     updateStatus();
 
-    m_moveStatus = TorrentMoveStatus::Completed;
     m_newPath.clear();
     if (!m_queuedPath.isEmpty()) {
         moveStorage(m_queuedPath);
@@ -1382,6 +1381,8 @@ void TorrentHandle::handleStorageMovedAlert(libtorrent::storage_moved_alert *p)
         m_savePath = newPath;
         m_session->handleTorrentSavePathChanged(this);
     }
+
+    m_moveStatus = TorrentMoveStatus::Completed;
 
     while (!isMoveInProgress() && (m_renameCount == 0) && !m_moveFinishedTriggers.isEmpty())
         m_moveFinishedTriggers.takeFirst()();
