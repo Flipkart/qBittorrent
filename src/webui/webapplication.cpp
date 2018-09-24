@@ -233,8 +233,12 @@ void WebApplication::action_query_torrents()
     CHECK_URI(0);
     const QStringMap& gets = request().gets;
 
+    QStringSet hashSet = gets["hashes"].split('|', QString::SkipEmptyParts).toSet();
+    hashSet = hashSet.isEmpty() ? TorrentFilter::AnyHash: hashSet;
+    TorrentFilter torrentFilter = TorrentFilter(gets["filter"], hashSet, gets["category"]);
+
     print(btjson::getTorrents(
-        gets["filter"], gets["category"], gets["sort"], gets["reverse"] == "true",
+        torrentFilter, gets["sort"], gets["reverse"] == "true",
         gets["limit"].toInt(), gets["offset"].toInt()
         ), Http::CONTENT_TYPE_JSON);
 }

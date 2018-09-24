@@ -34,6 +34,7 @@
 #include <QCoreApplication>
 #include <QString>
 #include <QVariant>
+#include "base/torrentfilter.h"
 
 class btjson
 {
@@ -43,7 +44,7 @@ private:
     btjson() {}
 
 public:
-    static QByteArray getTorrents(QString filter = "all", QString category = QString(),
+    static QByteArray getTorrents(TorrentFilter torrentFilter = TorrentFilter("all"),
         QString sortedColumn = "name", bool reverse = false, int limit = 0, int offset = 0);
     static QByteArray getSyncMainData(int acceptedResponseId, QVariantMap &lastData, QVariantMap &lastAcceptedData);
     static QByteArray getSyncTorrentPeersData(int acceptedResponseId, QString hash, QVariantMap &lastData, QVariantMap &lastAcceptedData);

@@ -326,11 +326,10 @@ private:
  *   - "force_start": Torrent force start state
  *   - "category": Torrent category
  */
-QByteArray btjson::getTorrents(QString filter, QString category,
+QByteArray btjson::getTorrents(TorrentFilter torrentFilter,
                                QString sortedColumn, bool reverse, int limit, int offset)
 {
     QVariantList torrentList;
-    TorrentFilter torrentFilter(filter, TorrentFilter::AnyHash, category);
     foreach (BitTorrent::TorrentHandle *const torrent, BitTorrent::Session::instance()->torrents()) {
         if (torrentFilter.match(torrent))
             torrentList.append(toMap(torrent));
@@ -352,6 +351,8 @@ QByteArray btjson::getTorrents(QString filter, QString category,
     else
         return json::toJson(torrentList);
 }
+
+
 
 /**
  * The function returns the changed data from the server to synchronize with the web client.
